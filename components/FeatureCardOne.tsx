@@ -2,7 +2,7 @@ import { Bell, Settings, Globe, Smartphone } from "lucide-react"
 
 export default function FCard() {
   return (
-    <div className="flex flex-col md:flex-row gap-5 p-4 mb-8">
+    <div className="flex flex-col md:flex-row gap-5 p-4 mb-8 max-lg:mb-2">
       <div className="bg-white rounded-lg shadow-sm p-4 w-[260px]">
         <div className="mb-4">
           <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center border border-gray-200">
