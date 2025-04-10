@@ -19,6 +19,7 @@ export const metadata: Metadata = {
   description: "Monitor your website uptime",
 };
 
+
 export default function RootLayout({
   children,
 }: Readonly<{
