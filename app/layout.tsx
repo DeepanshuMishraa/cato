@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Appbar from "@/components/Appbar";
 import Footer from "@/components/Footer";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -33,6 +34,7 @@ export default function RootLayout({
         <Appbar />
         {children}
         <Footer />
+        <Toaster />
       </body>
     </html>
   );

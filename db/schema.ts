@@ -7,7 +7,7 @@ export const user = pgTable("user", {
   emailVerified: boolean('email_verified').notNull(),
   image: text('image'),
   createdAt: timestamp('created_at').notNull(),
-  updatedAt: timestamp('updated_at').notNull()
+  updatedAt: timestamp('updated_at').notNull(),
 });
 
 export const session = pgTable("session", {
@@ -45,3 +45,15 @@ export const verification = pgTable("verification", {
   createdAt: timestamp('created_at'),
   updatedAt: timestamp('updated_at')
 });
+
+
+export const website = pgTable("website", {
+  id: text("id").primaryKey(),
+  name: text('name').notNull(),
+  url: text('url').notNull().unique(),
+  status: integer('status').notNull(),
+  responseTime: integer('response_time').notNull(),
+  createdAt: timestamp('created_at').notNull(),
+  updatedAt: timestamp('updated_at').notNull(),
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' })
+})

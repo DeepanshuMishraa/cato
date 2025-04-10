@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const Hero = () => {
   return (
     <div className="min-h-[80vh] flex flex-col items-center justify-center max-w-3xl mx-auto px-4 sm:px-6 motion-preset-fade motion-duration-1000 border-b">
@@ -9,12 +11,14 @@ const Hero = () => {
         Instant notifications. Real-time analytics. Reliable monitoring.
       </p>
       <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-center">
-        <button
-          type="submit"
-          className="w-full sm:w-auto rounded-none bg-black hover:bg-gray-800 text-white px-4 sm:px-6 py-2.5 sm:py-3 text-base sm:text-lg"
-        >
-          Start Monitoring
-        </button>
+        <Link href="/dashboard">
+          <button
+            type="submit"
+            className="w-full sm:w-auto rounded-none bg-black hover:bg-gray-800 text-white px-4 sm:px-6 py-2.5 sm:py-3 text-base sm:text-lg"
+          >
+            Start Monitoring
+          </button>
+        </Link>
         <a href="#learn-more" className="text-xs sm:text-sm font-mono underline text-gray-600 hover:text-black">
           Learn more →
         </a>
