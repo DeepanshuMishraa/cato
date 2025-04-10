@@ -4,6 +4,7 @@ import "./globals.css";
 import Appbar from "@/components/Appbar";
 import Footer from "@/components/Footer";
 import { Toaster } from "@/components/ui/sonner";
+import QueryProvider from "./providers";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -31,11 +32,14 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${jetbrainsMono.variable} ${inter.className} antialiased`}
       >
-        <Appbar />
-        {children}
-        <Footer />
-        <Toaster />
+        <QueryProvider>
+          <Appbar />
+          {children}
+          <Footer />
+          <Toaster />
+        </QueryProvider>
       </body>
+
     </html>
   );
 }

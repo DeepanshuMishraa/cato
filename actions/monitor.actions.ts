@@ -4,11 +4,18 @@ import { db } from "@/db";
 import { website } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { SiteTypes } from "@/lib/types"
+import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 
 type AddSiteResponse = {
   success: boolean;
   message: string;
+};
+
+type GetSitesResponse = {
+  success: boolean;
+  message?: string;
+  sites?: any[];
 };
 
 export const addSite = async (site: unknown): Promise<AddSiteResponse> => {
@@ -55,6 +62,30 @@ export const addSite = async (site: unknown): Promise<AddSiteResponse> => {
     return {
       success: false,
       message: err instanceof Error ? err.message : "Failed to add site",
+    };
+  }
+}
+
+export const getSites = async (userId: string): Promise<GetSitesResponse> => {
+  if (!userId) {
+    return {
+      success: false,
+      message: "User ID is required",
+    };
+  }
+
+  try {
+    const sites = await db.select().from(website).where(eq(website.userId, userId));
+    return {
+      success: true,
+      sites: sites || [],
+    };
+  } catch (err) {
+    console.error("Error getting sites:", err);
+    return {
+      success: false,
+      message: err instanceof Error ? err.message : "Failed to get sites",
+      sites: [],
     };
   }
 }
