@@ -1,7 +1,11 @@
+import FeatureCard from "@/components/AboutCards";
+import Hero from "@/components/Hero";
+
 export default function Home() {
   return (
-    <div>
-      Hello world
-    </div>
+    <main>
+      <Hero />
+      <FeatureCard />
+    </main>
   );
 }

@@ -1,11 +1,17 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import Appbar from "@/components/Appbar";
 
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
-})
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
+});
 
 export const metadata: Metadata = {
   title: "cato",
@@ -20,8 +26,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.className} antialiased`}
+        className={`${inter.variable} ${jetbrainsMono.variable} ${inter.className} antialiased`}
       >
+        <Appbar />
         {children}
       </body>
     </html>
