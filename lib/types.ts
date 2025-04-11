@@ -6,5 +6,9 @@ export const SiteTypes = z.object({
   url: z.string().url().nonempty(),
 })
 
+export const urlType = z.object({
+  url: z.string().url().nonempty()
+})
+
 
 export type SiteType = z.infer<typeof SiteTypes>;

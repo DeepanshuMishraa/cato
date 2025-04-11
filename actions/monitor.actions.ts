@@ -1,11 +1,13 @@
 "use server";
 
 import { db } from "@/db";
-import { website } from "@/db/schema";
+import { website, websiteLog } from "@/db/schema";
 import { auth } from "@/lib/auth";
-import { SiteTypes } from "@/lib/types"
+import { SiteTypes, urlType } from "@/lib/types"
 import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
+import axios from "axios";
+import { v4 as uuidv4 } from "uuid";
 
 type AddSiteResponse = {
   success: boolean;
@@ -89,3 +91,105 @@ export const getSites = async (userId: string): Promise<GetSitesResponse> => {
     };
   }
 }
+
+export const pingSites = async (siteUrl: string, intervalMs: number = 3000*60) => {
+  const pingOnce = async () => {
+    try {
+      const session = await auth.api.getSession({
+        headers: await headers()
+      })
+
+      if (!session?.user?.id) {
+        throw new Error("User not authenticated");
+      }
+
+      const parsedUrl = urlType.safeParse({ url: siteUrl });
+
+      if (!parsedUrl.success) {
+        throw new Error("Invalid URL");
+      }
+
+      const { url } = parsedUrl.data;
+      const start = Date.now();
+
+      const ping = await axios.get(url, { timeout: 5000 }); 
+
+      const responseTime = Date.now() - start;
+      const isUp = ping.status >= 200 && ping.status < 400;
+
+      await db
+        .update(website)
+        .set({
+          status: ping.status,
+          responseTime,
+          updatedAt: new Date(),
+        })
+        .where(eq(website.url, url));
+
+      const websiteEntry = await db.select().from(website).where(eq(website.url, url));
+
+      if (websiteEntry[0]) {
+        await db.insert(websiteLog).values({
+          id: uuidv4(),
+          websiteId: websiteEntry[0].id,
+          checkedAt: new Date(),
+          responseTime,
+          statusCode: ping.status,
+          isUp,
+        });
+      }
+
+      return {
+        success: true,
+        message: "Site is up",
+        responseTime,
+        status: ping.status,
+      };
+    } catch (err: any) {
+      console.error("Error pinging site:", err);
+
+      const parsedUrl = urlType.safeParse({ url: siteUrl });
+      const { url } = parsedUrl.success ? parsedUrl.data : { url: siteUrl };
+
+      const websiteEntry = await db.select().from(website).where(eq(website.url, url));
+
+      if (websiteEntry[0]) {
+        await db.insert(websiteLog).values({
+          id: uuidv4(),
+          websiteId: websiteEntry[0].id,
+          checkedAt: new Date(),
+          responseTime: 0,
+          statusCode: 0,
+          isUp: false,
+        });
+
+        await db
+          .update(website)
+          .set({
+            status: 0,
+            responseTime: 0,
+            updatedAt: new Date(),
+          })
+          .where(eq(website.url, url));
+      }
+
+      return {
+        success: false,
+        message: err instanceof Error ? err.message : "Failed to ping site",
+        responseTime: 0,
+        status: 0,
+      };
+    }
+  };
+  await pingOnce();
+
+  if (typeof setInterval !== 'undefined') {
+    setInterval(pingOnce, intervalMs);
+  }
+
+  return {
+    success: true,
+    message: "Ping monitoring started",
+  };
+}
+

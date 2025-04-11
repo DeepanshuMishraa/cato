@@ -1,9 +1,9 @@
 "use client"
-
-import { getSites } from "@/actions/monitor.actions"
+import { getSites, pingSites } from "@/actions/monitor.actions"
 import { authClient } from "@/lib/auth.client"
 import { useQuery } from "@tanstack/react-query"
 import { toast } from "sonner"
+import { useEffect, useState } from "react"
 
 interface SiteType {
   id: string
@@ -12,10 +12,12 @@ interface SiteType {
   responseTime: number
   status: number
   userId: string
+  updatedAt?: Date
 }
 
 const SiteCard = () => {
   const { data: session } = authClient.useSession()
+  const [pingingIds, setPingingIds] = useState<Set<string>>(new Set())
 
   const query = useQuery({
     queryKey: ["getSites", session?.user?.id],
@@ -29,6 +31,53 @@ const SiteCard = () => {
     },
     enabled: !!session?.user?.id,
   })
+
+  useEffect(() => {
+    if (query?.data?.length > 0) {
+      query?.data.forEach((site: SiteType) => {
+        pingSite(site.url, site.id)
+      })
+    }
+  }, [query.data])
+
+  const pingSite = async (url: string, siteId: string) => {
+    if (pingingIds.has(siteId)) return
+
+    setPingingIds(prev => new Set(prev).add(siteId))
+
+    try {
+      await pingSites(url, 180000)
+      setTimeout(() => {
+        query.refetch()
+        setPingingIds(prev => {
+          const updated = new Set(prev)
+          updated.delete(siteId)
+          return updated
+        })
+      }, 3 * 60 * 1000)
+    } catch (error) {
+      toast.error(`Failed to ping ${url}`)
+      setPingingIds(prev => {
+        const updated = new Set(prev)
+        updated.delete(siteId)
+        return updated
+      })
+    }
+  }
+
+  const getStatusIndicator = (status: number) => {
+    if (status >= 200 && status < 300) return "bg-green-500" // Good
+    if (status >= 300 && status < 400) return "bg-yellow-500" // Redirect
+    if (status >= 400) return "bg-red-500" // Error
+    return "bg-gray-500" // Unknown/No response
+  }
+
+  const getStatusText = (status: number) => {
+    if (status >= 200 && status < 300) return "ONLINE"
+    if (status >= 300 && status < 400) return "REDIRECT"
+    if (status >= 400) return "ERROR"
+    return "OFFLINE"
+  }
 
   if (query.isLoading) {
     return (
@@ -58,16 +107,17 @@ const SiteCard = () => {
             <div className="flex items-center gap-3">
               <div className="relative">
                 <div
-                  className={`h-3 w-3 rounded-full ${site.status === 1 ? "bg-green-500" : "bg-red-500"
-                    }`}
+                  className={`h-3 w-3 rounded-full ${getStatusIndicator(site.status)}`}
                 ></div>
                 <div
-                  className={`absolute inset-0 rounded-full ${site.status === 1
-                      ? "bg-green-500 animate-ping opacity-75"
-                      : "bg-red-500 animate-pulse opacity-75"
+                  className={`absolute inset-0 rounded-full ${getStatusIndicator(site.status)} ${site.status >= 200 && site.status < 300
+                    ? "animate-ping opacity-75"
+                    : site.status >= 300 && site.status < 400
+                      ? "animate-pulse opacity-75"
+                      : "animate-pulse opacity-75"
                     }`}
                   style={{
-                    animationDuration: site.status === 1 ? "3s" : "1s",
+                    animationDuration: site.status >= 200 && site.status < 300 ? "3s" : "1s",
                     animationIterationCount: "infinite"
                   }}
                 ></div>
@@ -75,15 +125,18 @@ const SiteCard = () => {
               <div>
                 <h3 className="font-mono text-sm">{site.url}</h3>
                 <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
-                  <span>{site.status === 1 ? "ONLINE" : "OFFLINE"}</span>
+                  <span>{getStatusText(site.status)}</span>
                   <span className="text-gray-300">|</span>
                   <span>{site.responseTime} ms</span>
                 </div>
               </div>
             </div>
-
             <div className="flex items-center gap-4">
-              <div className="text-xs text-gray-500 font-mono">{site.status === 1 ? "14h 26m" : "DOWN"}</div>
+              <div className="text-xs text-gray-500 font-mono">
+                {site.status >= 200 && site.status < 400
+                  ? "ONLINE"
+                  : "DOWN"}
+              </div>
 
               <button className="text-gray-400 hover:text-black transition-colors">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">

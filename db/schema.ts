@@ -48,6 +48,7 @@ export const verification = pgTable("verification", {
 
 
 export const website = pgTable("website", {
+
   id: text("id").primaryKey(),
   name: text('name').notNull(),
   url: text('url').notNull().unique(),
@@ -56,4 +57,15 @@ export const website = pgTable("website", {
   createdAt: timestamp('created_at').notNull(),
   updatedAt: timestamp('updated_at').notNull(),
   userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' })
-})
+
+});
+
+
+export const websiteLog = pgTable("website_log", {
+  id: text("id").primaryKey(),
+  websiteId: text("website_id").notNull().references(() => website.id, { onDelete: 'cascade' }),
+  checkedAt: timestamp("checked_at").notNull(),
+  responseTime: integer("response_time").notNull(),
+  statusCode: integer("status_code").notNull(),
+  isUp: boolean("is_up").notNull(),
+});

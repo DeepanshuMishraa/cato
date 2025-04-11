@@ -15,6 +15,13 @@
       "when": 1744310509284,
       "tag": "0001_mighty_jackal",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1744354350671,
+      "tag": "0002_easy_leopardon",
+      "breakpoints": true
     }
   ]
 }
