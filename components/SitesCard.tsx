@@ -18,6 +18,7 @@ interface SiteType {
 const SiteCard = () => {
   const { data: session } = authClient.useSession()
   const [pingingIds, setPingingIds] = useState<Set<string>>(new Set())
+  const [lastPingTime, setLastPingTime] = useState<Record<string, number>>({})
 
   const query = useQuery({
     queryKey: ["getSites", session?.user?.id],
@@ -30,31 +31,56 @@ const SiteCard = () => {
       return response.sites
     },
     enabled: !!session?.user?.id,
+    refetchInterval: 10000, // Refetch data every 10 seconds to update UI
   })
 
+  // Initial ping for all sites when component mounts or data changes
   useEffect(() => {
     if (query?.data?.length > 0) {
       query?.data.forEach((site: SiteType) => {
-        pingSite(site.url, site.id)
+        const now = Date.now()
+        // Only ping if it hasn't been pinged in the last 3 minutes
+        if (!lastPingTime[site.id] || now - lastPingTime[site.id] >= 3 * 60 * 1000) {
+          pingSite(site.url, site.id)
+        }
       })
     }
   }, [query.data])
 
+  // Setup interval for regular pinging
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (query?.data?.length > 0) {
+        query?.data.forEach((site: SiteType) => {
+          const now = Date.now()
+          // Only ping if it hasn't been pinged in the last 3 minutes
+          if (!lastPingTime[site.id] || now - lastPingTime[site.id] >= 3 * 60 * 1000) {
+            pingSite(site.url, site.id)
+          }
+        })
+      }
+    }, 60000) // Check every minute which sites need to be pinged
+
+    return () => clearInterval(interval)
+  }, [query.data, lastPingTime])
+
   const pingSite = async (url: string, siteId: string) => {
+    // Don't ping if already in progress
     if (pingingIds.has(siteId)) return
 
+    // Mark site as being pinged
     setPingingIds(prev => new Set(prev).add(siteId))
+    setLastPingTime(prev => ({ ...prev, [siteId]: Date.now() }))
 
     try {
       await pingSites(url)
-      setTimeout(() => {
-        query.refetch()
-        setPingingIds(prev => {
-          const updated = new Set(prev)
-          updated.delete(siteId)
-          return updated
-        })
-      }, 3 * 60 * 1000)
+      // No need for setTimeout here as we're updating lastPingTime
+      query.refetch()
+      setPingingIds(prev => {
+        const updated = new Set(prev)
+        updated.delete(siteId)
+        return updated
+      })
     } catch (error) {
       toast.error(`Failed to ping ${url}`)
       setPingingIds(prev => {
@@ -68,15 +94,32 @@ const SiteCard = () => {
   const getStatusIndicator = (status: number) => {
     if (status >= 200 && status < 300) return "bg-green-500" // Good
     if (status >= 300 && status < 400) return "bg-yellow-500" // Redirect
-    if (status >= 400) return "bg-red-500" // Error
+    if (status >= 400 && status < 500) return "bg-red-500" // Client Error
+    if (status >= 500) return "bg-purple-500" // Server Error
     return "bg-gray-500" // Unknown/No response
   }
 
   const getStatusText = (status: number) => {
     if (status >= 200 && status < 300) return "ONLINE"
     if (status >= 300 && status < 400) return "REDIRECT"
-    if (status >= 400) return "ERROR"
+    if (status >= 400 && status < 500) return "CLIENT ERROR"
+    if (status >= 500) return "SERVER ERROR"
     return "OFFLINE"
+  }
+
+  const getStatusAnimation = (status: number) => {
+    if (status >= 200 && status < 300)
+      return "animate-ping opacity-75"
+    if (status >= 300 && status < 400)
+      return "animate-pulse opacity-75"
+    if (status >= 400)
+      return "animate-pulse opacity-75"
+    return "opacity-75"
+  }
+
+  const getStatusDuration = (status: number) => {
+    if (status >= 200 && status < 300) return "3s"
+    return "1s"
   }
 
   if (query.isLoading) {
@@ -110,14 +153,9 @@ const SiteCard = () => {
                   className={`h-3 w-3 rounded-full ${getStatusIndicator(site.status)}`}
                 ></div>
                 <div
-                  className={`absolute inset-0 rounded-full ${getStatusIndicator(site.status)} ${site.status >= 200 && site.status < 300
-                    ? "animate-ping opacity-75"
-                    : site.status >= 300 && site.status < 400
-                      ? "animate-pulse opacity-75"
-                      : "animate-pulse opacity-75"
-                    }`}
+                  className={`absolute inset-0 rounded-full ${getStatusIndicator(site.status)} ${getStatusAnimation(site.status)}`}
                   style={{
-                    animationDuration: site.status >= 200 && site.status < 300 ? "3s" : "1s",
+                    animationDuration: getStatusDuration(site.status),
                     animationIterationCount: "infinite"
                   }}
                 ></div>
@@ -128,6 +166,12 @@ const SiteCard = () => {
                   <span>{getStatusText(site.status)}</span>
                   <span className="text-gray-300">|</span>
                   <span>{site.responseTime} ms</span>
+                  {pingingIds.has(site.id) && (
+                    <>
+                      <span className="text-gray-300">|</span>
+                      <span className="text-blue-500">CHECKING...</span>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -135,7 +179,9 @@ const SiteCard = () => {
               <div className="text-xs text-gray-500 font-mono">
                 {site.status >= 200 && site.status < 400
                   ? "ONLINE"
-                  : "DOWN"}
+                  : site.status >= 400 && site.status < 600
+                    ? getStatusText(site.status)
+                    : "DOWN"}
               </div>
 
               <button className="text-gray-400 hover:text-black transition-colors">

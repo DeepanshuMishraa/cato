@@ -97,24 +97,24 @@ export const pingSites = async (siteUrl: string) => {
     const session = await auth.api.getSession({
       headers: await headers()
     })
-
     if (!session?.user?.id) {
       throw new Error("User not authenticated");
     }
-
     const parsedUrl = urlType.safeParse({ url: siteUrl });
-
     if (!parsedUrl.success) {
       throw new Error("Invalid URL");
     }
-
     const { url } = parsedUrl.data;
     const start = Date.now();
-
-    const ping = await axios.get(url, { timeout: 5000 });
+    const ping = await axios.get(url, {
+      timeout: 5000,
+      validateStatus: function (status) {
+        return true; 
+      }
+    });
 
     const responseTime = Date.now() - start;
-    const isUp = ping.status >= 200 && ping.status < 400;
+    const isUp = ping.status >= 200 && ping.status < 600; // Consider any response as "up"
 
     await db
       .update(website)
@@ -126,7 +126,6 @@ export const pingSites = async (siteUrl: string) => {
       .where(eq(website.url, url));
 
     const websiteEntry = await db.select().from(website).where(eq(website.url, url));
-
     if (websiteEntry[0]) {
       await db.insert(websiteLog).values({
         id: uuidv4(),
@@ -140,33 +139,34 @@ export const pingSites = async (siteUrl: string) => {
 
     return {
       success: true,
-      message: "Site is up",
+      message: "Site responded",
       responseTime,
       status: ping.status,
     };
   } catch (err: any) {
     console.error("Error pinging site:", err);
-
     const parsedUrl = urlType.safeParse({ url: siteUrl });
     const { url } = parsedUrl.success ? parsedUrl.data : { url: siteUrl };
 
-    const websiteEntry = await db.select().from(website).where(eq(website.url, url));
+    const statusCode = err.response?.status || 0;
+    const responseTime = err.response ? (err.response.responseTime || 0) : 0;
 
+    const websiteEntry = await db.select().from(website).where(eq(website.url, url));
     if (websiteEntry[0]) {
       await db.insert(websiteLog).values({
         id: uuidv4(),
         websiteId: websiteEntry[0].id,
         checkedAt: new Date(),
-        responseTime: 0,
-        statusCode: 0,
-        isUp: false,
+        responseTime,
+        statusCode,
+        isUp: statusCode >= 200 && statusCode < 600,
       });
 
       await db
         .update(website)
         .set({
-          status: 0,
-          responseTime: 0,
+          status: statusCode,
+          responseTime,
           updatedAt: new Date(),
         })
         .where(eq(website.url, url));
@@ -175,8 +175,8 @@ export const pingSites = async (siteUrl: string) => {
     return {
       success: false,
       message: err instanceof Error ? err.message : "Failed to ping site",
-      responseTime: 0,
-      status: 0,
+      responseTime,
+      status: statusCode,
     };
   }
 };
