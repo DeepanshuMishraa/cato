@@ -92,7 +92,7 @@ export const getSites = async (userId: string): Promise<GetSitesResponse> => {
   }
 }
 
-export const pingSites = async (siteUrl: string, intervalMs: number = 3000*60) => {
+export const pingSites = async (siteUrl: string) => {
   const pingOnce = async () => {
     try {
       const session = await auth.api.getSession({
@@ -181,12 +181,6 @@ export const pingSites = async (siteUrl: string, intervalMs: number = 3000*60) =
       };
     }
   };
-  await pingOnce();
-
-  if (typeof setInterval !== 'undefined') {
-    setInterval(pingOnce, intervalMs);
-  }
-
   return {
     success: true,
     message: "Ping monitoring started",

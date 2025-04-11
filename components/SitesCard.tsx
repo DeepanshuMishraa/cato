@@ -46,7 +46,7 @@ const SiteCard = () => {
     setPingingIds(prev => new Set(prev).add(siteId))
 
     try {
-      await pingSites(url, 180000)
+      await pingSites(url)
       setTimeout(() => {
         query.refetch()
         setPingingIds(prev => {
