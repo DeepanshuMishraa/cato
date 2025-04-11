@@ -96,30 +96,72 @@ export const pingSites = async (siteUrl: string) => {
   try {
     const session = await auth.api.getSession({
       headers: await headers()
-    })
+    });
+
     if (!session?.user?.id) {
       throw new Error("User not authenticated");
     }
+
     const parsedUrl = urlType.safeParse({ url: siteUrl });
     if (!parsedUrl.success) {
       throw new Error("Invalid URL");
     }
+
     const { url } = parsedUrl.data;
     const start = Date.now();
-    const ping = await axios.get(url, {
-      timeout: 5000,
-      validateStatus: function (status) {
-        return true; 
+
+    // Debug logging
+    console.log(`Pinging site: ${url}`);
+
+    let status = 0;
+    let responseTime = 0;
+    let isUp = false;
+
+    try {
+      // Configure axios to never throw on status codes
+      const ping = await axios.get(url, {
+        timeout: 5000,
+        validateStatus: () => true  // Accept any status code
+      });
+
+      // Debug logging
+      console.log(`Received response from ${url}:`, {
+        status: ping.status,
+        data: typeof ping.data,
+        headers: ping.headers
+      });
+
+      responseTime = Date.now() - start;
+      status = ping.status;
+      isUp = status >= 200 && status < 600;
+    } catch (requestError) {
+      // This catch block will only run for network errors, not status code errors
+      console.error(`Network error pinging ${url}:`, requestError);
+
+      // Try to extract status from error response if available
+      if (requestError.response && requestError.response.status) {
+        status = requestError.response.status;
+        isUp = status >= 200 && status < 600;
+      } else {
+        status = 0; // Genuine connection error
+        isUp = false;
       }
+
+      responseTime = Date.now() - start;
+    }
+
+    // Debug logging
+    console.log(`Final status for ${url}:`, {
+      status,
+      responseTime,
+      isUp
     });
 
-    const responseTime = Date.now() - start;
-    const isUp = ping.status >= 200 && ping.status < 600; // Consider any response as "up"
-
+    // Update database regardless of status
     await db
       .update(website)
       .set({
-        status: ping.status,
+        status,
         responseTime,
         updatedAt: new Date(),
       })
@@ -132,51 +174,61 @@ export const pingSites = async (siteUrl: string) => {
         websiteId: websiteEntry[0].id,
         checkedAt: new Date(),
         responseTime,
-        statusCode: ping.status,
+        statusCode: status,
         isUp,
       });
     }
 
+    // Return response with actual status
     return {
-      success: true,
-      message: "Site responded",
+      success: true, // We're always returning success:true because we got a response
+      message: isUp ? "Site is up" : "Site is down",
       responseTime,
-      status: ping.status,
+      status,
     };
-  } catch (err: any) {
-    console.error("Error pinging site:", err);
+
+  } catch (outerError) {
+    // This catch block is for errors in our function's logic, not the HTTP request
+    console.error("Error in pingSites function:", outerError);
+
     const parsedUrl = urlType.safeParse({ url: siteUrl });
     const { url } = parsedUrl.success ? parsedUrl.data : { url: siteUrl };
 
-    const statusCode = err.response?.status || 0;
-    const responseTime = err.response ? (err.response.responseTime || 0) : 0;
+    // Default values in case of error
+    const status = 0;
+    const responseTime = 0;
+    const isUp = false;
 
-    const websiteEntry = await db.select().from(website).where(eq(website.url, url));
-    if (websiteEntry[0]) {
-      await db.insert(websiteLog).values({
-        id: uuidv4(),
-        websiteId: websiteEntry[0].id,
-        checkedAt: new Date(),
-        responseTime,
-        statusCode,
-        isUp: statusCode >= 200 && statusCode < 600,
-      });
-
-      await db
-        .update(website)
-        .set({
-          status: statusCode,
+    try {
+      const websiteEntry = await db.select().from(website).where(eq(website.url, url));
+      if (websiteEntry[0]) {
+        await db.insert(websiteLog).values({
+          id: uuidv4(),
+          websiteId: websiteEntry[0].id,
+          checkedAt: new Date(),
           responseTime,
-          updatedAt: new Date(),
-        })
-        .where(eq(website.url, url));
+          statusCode: status,
+          isUp,
+        });
+
+        await db
+          .update(website)
+          .set({
+            status,
+            responseTime,
+            updatedAt: new Date(),
+          })
+          .where(eq(website.url, url));
+      }
+    } catch (dbError) {
+      console.error("Database error:", dbError);
     }
 
     return {
       success: false,
-      message: err instanceof Error ? err.message : "Failed to ping site",
+      message: outerError instanceof Error ? outerError.message : "Failed to ping site",
       responseTime,
-      status: statusCode,
+      status,
     };
   }
 };
