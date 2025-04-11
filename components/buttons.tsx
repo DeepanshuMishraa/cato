@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { Loader2 } from "lucide-react";
 
 
 export default function JoinWaitlistButton({
@@ -140,7 +141,7 @@ export function AddSiteButton() {
         </DialogContent>
         <DialogFooter>
           <Button type="submit" className="w-full">
-            Add site
+            {form.formState.isSubmitting ? <Loader2 className="animate-spin" /> : "Add site"}
           </Button>
         </DialogFooter>
       </DialogContent>
