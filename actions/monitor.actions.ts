@@ -110,7 +110,6 @@ export const pingSites = async (siteUrl: string) => {
     const { url } = parsedUrl.data;
     const start = Date.now();
 
-    // Debug logging
     console.log(`Pinging site: ${url}`);
 
     let status = 0;
@@ -118,83 +117,80 @@ export const pingSites = async (siteUrl: string) => {
     let isUp = false;
 
     try {
-      // Configure axios to never throw on status codes
       const ping = await axios.get(url, {
         timeout: 5000,
-        validateStatus: () => true  // Accept any status code
+        validateStatus: null,
       });
 
-      // Debug logging
-      console.log(`Received response from ${url}:`, {
-        status: ping.status,
-        data: typeof ping.data,
-        headers: ping.headers
-      });
 
       responseTime = Date.now() - start;
       status = ping.status;
-      isUp = status >= 200 && status < 600;
-    } catch (requestError) {
-      // This catch block will only run for network errors, not status code errors
-      console.error(`Network error pinging ${url}:`, requestError);
+      isUp = status >= 200 && status < 400;
 
-      // Try to extract status from error response if available
-      if (requestError.response && requestError.response.status) {
+      await db
+        .update(website)
+        .set({
+          status,
+          responseTime,
+          updatedAt: new Date(),
+        })
+        .where(eq(website.url, url));
+
+      const websiteEntry = await db.select().from(website).where(eq(website.url, url));
+      if (websiteEntry[0]) {
+        await db.insert(websiteLog).values({
+          id: uuidv4(),
+          websiteId: websiteEntry[0].id,
+          checkedAt: new Date(),
+          responseTime,
+          statusCode: status,
+          isUp,
+        });
+      }
+
+      return {
+        success: true,
+        message: `Site returned status ${status}`,
+        responseTime,
+        status,
+      };
+    } catch (requestError) {
+      console.error('Request error:', requestError);
+
+      if (requestError.response) {
+        console.log('Error response:', {
+          status: requestError.response.status,
+          headers: requestError.response.headers,
+          data: requestError.response.data
+        });
+
         status = requestError.response.status;
-        isUp = status >= 200 && status < 600;
+      } else if (requestError.request) {
+        console.log('No response received:', requestError.request);
+        status = 0;
       } else {
-        status = 0; // Genuine connection error
-        isUp = false;
+        console.log('Error setting up request:', requestError.message);
+        status = 0;
       }
 
       responseTime = Date.now() - start;
-    }
+      isUp = status >= 200 && status < 400;
 
-    // Debug logging
-    console.log(`Final status for ${url}:`, {
-      status,
-      responseTime,
-      isUp
-    });
-
-    // Update database regardless of status
-    await db
-      .update(website)
-      .set({
+      return {
+        success: false,
+        message: "Failed to connect to the site",
+        responseTime,
         status,
-        responseTime,
-        updatedAt: new Date(),
-      })
-      .where(eq(website.url, url));
-
-    const websiteEntry = await db.select().from(website).where(eq(website.url, url));
-    if (websiteEntry[0]) {
-      await db.insert(websiteLog).values({
-        id: uuidv4(),
-        websiteId: websiteEntry[0].id,
-        checkedAt: new Date(),
-        responseTime,
-        statusCode: status,
-        isUp,
-      });
+      };
     }
-
-    // Return response with actual status
-    return {
-      success: true, // We're always returning success:true because we got a response
-      message: isUp ? "Site is up" : "Site is down",
-      responseTime,
-      status,
-    };
 
   } catch (outerError) {
-    // This catch block is for errors in our function's logic, not the HTTP request
     console.error("Error in pingSites function:", outerError);
 
     const parsedUrl = urlType.safeParse({ url: siteUrl });
     const { url } = parsedUrl.success ? parsedUrl.data : { url: siteUrl };
 
-    // Default values in case of error
+  
     const status = 0;
     const responseTime = 0;
     const isUp = false;
