@@ -31,15 +31,14 @@ const SiteCard = () => {
       return response.sites
     },
     enabled: !!session?.user?.id,
-    refetchInterval: 10000, // Refetch data every 10 seconds to update UI
+    refetchInterval: 10000, 
   })
 
-  // Initial ping for all sites when component mounts or data changes
+  
   useEffect(() => {
     if (query?.data?.length > 0) {
       query?.data.forEach((site: SiteType) => {
         const now = Date.now()
-        // Only ping if it hasn't been pinged in the last 3 minutes
         if (!lastPingTime[site.id] || now - lastPingTime[site.id] >= 3 * 60 * 1000) {
           pingSite(site.url, site.id)
         }
@@ -47,34 +46,29 @@ const SiteCard = () => {
     }
   }, [query.data])
 
-  // Setup interval for regular pinging
+
   useEffect(() => {
     const interval = setInterval(() => {
       if (query?.data?.length > 0) {
         query?.data.forEach((site: SiteType) => {
           const now = Date.now()
-          // Only ping if it hasn't been pinged in the last 3 minutes
           if (!lastPingTime[site.id] || now - lastPingTime[site.id] >= 3 * 60 * 1000) {
             pingSite(site.url, site.id)
           }
         })
       }
-    }, 60000) // Check every minute which sites need to be pinged
+    }, 60000) 
 
     return () => clearInterval(interval)
   }, [query.data, lastPingTime])
 
   const pingSite = async (url: string, siteId: string) => {
-    // Don't ping if already in progress
     if (pingingIds.has(siteId)) return
-
-    // Mark site as being pinged
     setPingingIds(prev => new Set(prev).add(siteId))
     setLastPingTime(prev => ({ ...prev, [siteId]: Date.now() }))
 
     try {
       await pingSites(url)
-      // No need for setTimeout here as we're updating lastPingTime
       query.refetch()
       setPingingIds(prev => {
         const updated = new Set(prev)
