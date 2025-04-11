@@ -182,8 +182,6 @@ export const pingSites = async (siteUrl: string) => {
 };
 
 
-
-
 export const searchSites = async (userId: string, name: string) => {
   try {
     const session = await auth.api.getSession({
