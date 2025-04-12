@@ -1,0 +1,1 @@
+ALTER TABLE "website" ADD COLUMN "last_email_alert" timestamp;

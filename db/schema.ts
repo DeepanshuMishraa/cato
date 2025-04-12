@@ -48,7 +48,6 @@ export const verification = pgTable("verification", {
 
 
 export const website = pgTable("website", {
-
   id: text("id").primaryKey(),
   name: text('name').notNull(),
   url: text('url').notNull().unique(),
@@ -56,8 +55,8 @@ export const website = pgTable("website", {
   responseTime: integer('response_time').notNull(),
   createdAt: timestamp('created_at').notNull(),
   updatedAt: timestamp('updated_at').notNull(),
+  lastEmailAlert: timestamp('last_email_alert'),
   userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' })
-
 });
 
 

@@ -1,13 +1,14 @@
 "use server";
 
 import { db } from "@/db";
-import { website, websiteLog } from "@/db/schema";
+import { user, website, websiteLog } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { SiteTypes, urlType } from "@/lib/types"
 import { and, eq, like } from "drizzle-orm";
 import { headers } from "next/headers";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
+import { sendEmailAlert } from "@/lib/mail";
 
 type AddSiteResponse = {
   success: boolean;
@@ -125,82 +126,29 @@ export const pingSites = async (siteUrl: string) => {
         validateStatus: null,
       });
 
-
       responseTime = Date.now() - start;
       status = ping.status;
       isUp = status >= 200 && status < 400;
 
-      await db
-        .update(website)
-        .set({
-          status,
-          responseTime,
-          updatedAt: new Date(),
-        })
-        .where(eq(website.url, url));
-
       const websiteEntry = await db.select().from(website).where(eq(website.url, url));
       if (websiteEntry[0]) {
-        await db.insert(websiteLog).values({
-          id: uuidv4(),
-          websiteId: websiteEntry[0].id,
-          checkedAt: new Date(),
-          responseTime,
-          statusCode: status,
-          isUp,
-        });
-      }
+        const isSiteDown = !isUp;
+        const lastAlert = websiteEntry[0].lastEmailAlert;
+        const threeHoursInMs = 3 * 60 * 60 * 1000;
+        const shouldSendEmail = isSiteDown && (!lastAlert || Date.now() - lastAlert.getTime() > threeHoursInMs);
 
-      return {
-        success: true,
-        message: `Site returned status ${status}`,
-        responseTime,
-        status,
-      };
-    } catch (requestError) {
-      console.error('Request error:', requestError);
+        if (shouldSendEmail) {
+          const userResult = await db.select().from(user).where(eq(user.id, session.user.id));
+          if (userResult[0]?.email) {
+            await sendEmailAlert(userResult[0].email, websiteEntry[0].name);
+            await db.update(website)
+              .set({
+                lastEmailAlert: new Date(),
+              })
+              .where(eq(website.url, url));
+          }
+        }
 
-      if (requestError.response) {
-        console.log('Error response:', {
-          status: requestError.response.status,
-          headers: requestError.response.headers,
-          data: requestError.response.data
-        });
-
-        status = requestError.response.status;
-      } else if (requestError.request) {
-        console.log('No response received:', requestError.request);
-        status = 0;
-      } else {
-        console.log('Error setting up request:', requestError.message);
-        status = 0;
-      }
-
-      responseTime = Date.now() - start;
-      isUp = status >= 200 && status < 400;
-
-      return {
-        success: false,
-        message: "Failed to connect to the site",
-        responseTime,
-        status,
-      };
-    }
-
-  } catch (outerError) {
-    console.error("Error in pingSites function:", outerError);
-
-    const parsedUrl = urlType.safeParse({ url: siteUrl });
-    const { url } = parsedUrl.success ? parsedUrl.data : { url: siteUrl };
-
-
-    const status = 0;
-    const responseTime = 0;
-    const isUp = false;
-
-    try {
-      const websiteEntry = await db.select().from(website).where(eq(website.url, url));
-      if (websiteEntry[0]) {
         await db.insert(websiteLog).values({
           id: uuidv4(),
           websiteId: websiteEntry[0].id,
@@ -219,19 +167,78 @@ export const pingSites = async (siteUrl: string) => {
           })
           .where(eq(website.url, url));
       }
-    } catch (dbError) {
-      console.error("Database error:", dbError);
-    }
 
+      return {
+        success: true,
+        message: `Site returned status ${status}`,
+        responseTime,
+        status,
+      };
+    } catch (requestError) {
+      console.error('Request error:', requestError);
+
+      if (axios.isAxiosError(requestError) && requestError.response) {
+        status = requestError.response.status;
+      } else {
+        status = 0;
+      }
+
+      responseTime = Date.now() - start;
+      isUp = false;
+      const websiteEntry = await db.select().from(website).where(eq(website.url, url));
+      if (websiteEntry[0]) {
+        const lastAlert = websiteEntry[0].lastEmailAlert;
+        const threeHoursInMs = 3 * 60 * 60 * 1000;
+        const shouldSendEmail = !lastAlert || Date.now() - lastAlert.getTime() > threeHoursInMs;
+
+        if (shouldSendEmail) {
+          const userResult = await db.select().from(user).where(eq(user.id, session.user.id));
+          if (userResult[0]?.email) {
+            await sendEmailAlert(userResult[0].email, websiteEntry[0].name);
+            await db.update(website)
+              .set({
+                lastEmailAlert: new Date(),
+              })
+              .where(eq(website.url, url));
+          }
+        }
+
+        await db.insert(websiteLog).values({
+          id: uuidv4(),
+          websiteId: websiteEntry[0].id,
+          checkedAt: new Date(),
+          responseTime,
+          statusCode: status,
+          isUp,
+        });
+
+        await db
+          .update(website)
+          .set({
+            status,
+            responseTime,
+            updatedAt: new Date(),
+          })
+          .where(eq(website.url, url));
+      }
+
+      return {
+        success: false,
+        message: "Failed to connect to the site",
+        responseTime,
+        status,
+      };
+    }
+  } catch (outerError) {
+    console.error("Error in pingSites function:", outerError);
     return {
       success: false,
       message: outerError instanceof Error ? outerError.message : "Failed to ping site",
-      responseTime,
-      status,
+      responseTime: 0,
+      status: 0,
     };
   }
 };
-
 
 export const searchSites = async (name: string) => {
   try {
@@ -252,7 +259,7 @@ export const searchSites = async (name: string) => {
       )
     )
 
-  if (sites.length === 0) {
+    if (sites.length === 0) {
       return {
         success: false,
         message: "No sites found",

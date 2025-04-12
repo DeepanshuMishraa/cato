@@ -12,13 +12,13 @@ import {
   Tailwind,
 } from '@react-email/components';
 
-const DowntimeAlert = () => {
+const DowntimeAlert = ({ siteName }: { siteName: string }) => {
   return (
     <Html>
       <Tailwind>
         <Head>
-          <title>Site Downtime Alert</title>
-          <Preview>Your website is currently down</Preview>
+          <title>Site Downtime Alert for {siteName}</title>
+          <Preview>Your website {siteName} is currently down</Preview>
         </Head>
         <Body className="bg-[#0F172A] font-sans py-[40px]">
           <Container className="mx-auto max-w-[500px]">
@@ -33,7 +33,7 @@ const DowntimeAlert = () => {
 
             <Section className="bg-[#1E293B] p-[32px] rounded-b-[12px]">
               <Text className="text-[16px] text-white mb-[24px]">
-                We've detected that <span className="font-bold text-[#38BDF8]">cato</span> is currently unreachable.
+                We've detected that <span className="font-bold text-[#38BDF8]">{siteName}</span> is currently unreachable.
               </Text>
 
               <Section className="bg-[#334155] rounded-[8px] p-[16px] mb-[24px]">
@@ -77,9 +77,6 @@ const DowntimeAlert = () => {
             <Section className="mt-[24px] text-center">
               <Text className="text-[12px] text-[#64748B] m-0">
                 © {new Date().getFullYear()} Cato Monitoring
-              </Text>
-              <Text className="text-[12px] text-[#64748B] m-0">
-                <a href="https://cato.com/unsubscribe" className="text-[#64748B] underline">Unsubscribe</a>
               </Text>
             </Section>
           </Container>
