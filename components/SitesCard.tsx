@@ -23,7 +23,7 @@ const SiteCard = () => {
   const query = useQuery({
     queryKey: ["getSites", session?.user?.id],
     queryFn: async () => {
-      const response = await getSites(session?.user?.id as string)
+      const response = await getSites()
       if (!response.success) {
         toast.error(response.message)
         return []
@@ -31,10 +31,10 @@ const SiteCard = () => {
       return response.sites
     },
     enabled: !!session?.user?.id,
-    refetchInterval: 10000, 
+    refetchInterval: 10000,
   })
 
-  
+
   useEffect(() => {
     if (query?.data?.length > 0) {
       query?.data.forEach((site: SiteType) => {
@@ -57,7 +57,7 @@ const SiteCard = () => {
           }
         })
       }
-    }, 60000) 
+    }, 60000)
 
     return () => clearInterval(interval)
   }, [query.data, lastPingTime])

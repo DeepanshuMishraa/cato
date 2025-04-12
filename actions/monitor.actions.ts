@@ -68,14 +68,17 @@ export const addSite = async (site: unknown): Promise<AddSiteResponse> => {
   }
 }
 
-export const getSites = async (userId: string): Promise<GetSitesResponse> => {
-  if (!userId) {
-    return {
-      success: false,
-      message: "User ID is required",
-    };
+export const getSites = async (): Promise<GetSitesResponse> => {
+
+  const session = await auth.api.getSession({
+    headers: await headers()
+  })
+
+  if (!session?.user) {
+    throw new Error("User not authenticated")
   }
 
+  const userId = session.user.id as string;
   try {
     const sites = await db.select().from(website).where(eq(website.userId, userId));
     return {
@@ -190,7 +193,7 @@ export const pingSites = async (siteUrl: string) => {
     const parsedUrl = urlType.safeParse({ url: siteUrl });
     const { url } = parsedUrl.success ? parsedUrl.data : { url: siteUrl };
 
-  
+
     const status = 0;
     const responseTime = 0;
     const isUp = false;
@@ -230,7 +233,7 @@ export const pingSites = async (siteUrl: string) => {
 };
 
 
-export const searchSites = async (userId: string, name: string) => {
+export const searchSites = async (name: string) => {
   try {
     const session = await auth.api.getSession({
       headers: await headers()
@@ -240,6 +243,8 @@ export const searchSites = async (userId: string, name: string) => {
       throw new Error("User not authenticated")
     }
 
+    const userId = session.user.id as string;
+
     const sites = await db.select().from(website).where(
       and(
         eq(website.userId, userId),
@@ -247,7 +252,7 @@ export const searchSites = async (userId: string, name: string) => {
       )
     )
 
-    if (sites.length === 0) {
+  if (sites.length === 0) {
       return {
         success: false,
         message: "No sites found",
