@@ -27,25 +27,35 @@ import {
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import Link from "next/link";
+import type { UrlObject } from 'url';
+
+
+
+type Url = string | UrlObject;
 
 
 export default function JoinWaitlistButton({
   children,
-  onClick
+  onClick,
+  href
 }: {
   children: React.ReactNode;
   onClick?: () => void;
+  href: Url;
 }) {
   return (
-    <Button
-      id="#waitlist"
-      size={"sm"}
-      variant={null}
-      onClick={onClick}
-      className="cursor-pointer shadow-xs border border-gray-200 text-xs font-normal"
-    >
-      {children}
-    </Button>
+    <Link href={href}>
+      <Button
+        size={"sm"}
+        variant={null}
+        onClick={onClick}
+        className="cursor-pointer shadow-xs border border-gray-200 text-xs font-normal"
+      >
+        {children}
+      </Button>
+    </Link>
+
   )
 }
 

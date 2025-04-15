@@ -17,7 +17,7 @@ export default function EarlyAccess() {
 
       <div className="mt-6 items-center justify-center sm:mt-8 flex flex-col sm:flex-row gap-3 w-full max-w-md">
         <Input required type="text" placeholder="your email address" className="w-full sm:w-64" />
-        <JoinWaitlistButton onClick={() => {
+        <JoinWaitlistButton href="#" onClick={() => {
           setTimeout(() => {
             try {
               setLoading(true);

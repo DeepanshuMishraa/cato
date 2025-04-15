@@ -43,14 +43,14 @@ export default function Appbar() {
               authClient.signOut({
                 fetchOptions: {
                   onSuccess: () => {
-                    router.push("/");
+                    router.push("/dashboard");
                   }
                 }
               })
             }} />
           ) : (
-            <JoinWaitlistButton>
-              Join Waitlist
+            <JoinWaitlistButton href="/sign-in">
+              Get Started
             </JoinWaitlistButton>
           )}
         </div>
@@ -58,8 +58,6 @@ export default function Appbar() {
       {isMenuOpen && (
         <>
           <div className="fixed inset-0 bg-white/80 backdrop-blur-sm" onClick={() => setIsMenuOpen(false)} />
-
-          {/* Menu Content */}
           <div className="fixed top-[64px] left-0 right-0 bg-white/95 backdrop-blur-md border-b shadow-sm py-6 px-4 flex flex-col gap-6 animate-in slide-in-from-top duration-300">
             <div className="flex flex-col gap-4">
               <Link
@@ -90,7 +88,7 @@ export default function Appbar() {
                   })
                 }} />
               ) : (
-                <JoinWaitlistButton onClick={() => setIsMenuOpen(false)}>
+                <JoinWaitlistButton href="/sign-in" onClick={() => setIsMenuOpen(false)}>
                   Get Started
                 </JoinWaitlistButton>
               )}
