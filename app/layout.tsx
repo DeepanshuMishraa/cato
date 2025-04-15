@@ -5,6 +5,7 @@ import Appbar from "@/components/Appbar";
 import Footer from "@/components/Footer";
 import { Toaster } from "@/components/ui/sonner";
 import QueryProvider from "./providers";
+import { Analytics } from "@vercel/analytics/react"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -38,6 +39,7 @@ export default function RootLayout({
           <Footer />
           <Toaster />
         </QueryProvider>
+        <Analytics />
       </body>
 
     </html>
