@@ -1,9 +1,10 @@
 "use client"
-import { getSites, pingSites } from "@/actions/monitor.actions"
+import {  getSites, pingSites } from "@/actions/monitor.actions"
 import { authClient } from "@/lib/auth.client"
 import { useQuery } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { useEffect, useState } from "react"
+import DeleteSite from "./DeleteSite"
 
 interface SiteType {
   id: string
@@ -34,10 +35,9 @@ const SiteCard = () => {
     refetchInterval: 10000,
   })
 
-
   useEffect(() => {
-    if (query?.data?.length > 0) {
-      query?.data.forEach((site: SiteType) => {
+    if (query.data && query.data.length > 0) {
+      query.data.forEach((site: SiteType) => {
         const now = Date.now()
         if (!lastPingTime[site.id] || now - lastPingTime[site.id] >= 3 * 60 * 1000) {
           pingSite(site.url, site.id)
@@ -46,11 +46,10 @@ const SiteCard = () => {
     }
   }, [query.data])
 
-
   useEffect(() => {
     const interval = setInterval(() => {
-      if (query?.data?.length > 0) {
-        query?.data.forEach((site: SiteType) => {
+      if (query.data && query.data.length > 0) {
+        query.data.forEach((site: SiteType) => {
           const now = Date.now()
           if (!lastPingTime[site.id] || now - lastPingTime[site.id] >= 3 * 60 * 1000) {
             pingSite(site.url, site.id)
@@ -177,15 +176,7 @@ const SiteCard = () => {
                     ? getStatusText(site.status)
                     : "DOWN"}
               </div>
-
-              <button className="text-gray-400 hover:text-black transition-colors">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M8 4C9.1 4 10 3.1 10 2C10 0.9 9.1 0 8 0C6.9 0 6 0.9 6 2C6 3.1 6.9 4 8 4ZM8 6C6.9 6 6 6.9 6 8C6 9.1 6.9 10 8 10C9.1 10 10 9.1 10 8C10 6.9 9.1 6 8 6ZM8 12C6.9 12 6 12.9 6 14C6 15.1 6.9 16 8 16C9.1 16 10 15.1 10 14C10 12.9 9.1 12 8 12Z"
-                    fill="currentColor"
-                  />
-                </svg>
-              </button>
+              <DeleteSite siteId={site.id} query={query} />
             </div>
           </div>
         </div>

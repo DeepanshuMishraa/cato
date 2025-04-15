@@ -44,7 +44,6 @@ export const addSite = async (site: unknown): Promise<AddSiteResponse> => {
 
     const { name, url } = parsedData.data;
     const now = new Date();
-
     await db.insert(website).values({
       id: crypto.randomUUID(),
       name: name.trim(),
@@ -140,7 +139,7 @@ export const pingSites = async (siteUrl: string) => {
         if (shouldSendEmail) {
           const userResult = await db.select().from(user).where(eq(user.id, session.user.id));
           if (userResult[0]?.email) {
-            await sendEmailAlert(userResult[0].email, websiteEntry[0].name);
+            await sendEmailAlert(userResult[0].email, websiteEntry[0].name, websiteEntry[0].url);
             await db.update(website)
               .set({
                 lastEmailAlert: new Date(),
@@ -194,7 +193,7 @@ export const pingSites = async (siteUrl: string) => {
         if (shouldSendEmail) {
           const userResult = await db.select().from(user).where(eq(user.id, session.user.id));
           if (userResult[0]?.email) {
-            await sendEmailAlert(userResult[0].email, websiteEntry[0].name);
+            await sendEmailAlert(userResult[0].email, websiteEntry[0].name, websiteEntry[0].url);
             await db.update(website)
               .set({
                 lastEmailAlert: new Date(),
@@ -275,6 +274,47 @@ export const searchSites = async (name: string) => {
     return {
       success: false,
       message: err instanceof Error ? err.message : "Failed to search sites",
+    }
+  }
+}
+
+export const deleteSite = async (siteId: string) => {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers()
+    })
+
+    if (!session?.user) {
+      throw new Error("User not authenticated")
+    }
+
+    //check if site belongs to the user
+
+    const SiteBelongsToUser = await db.select().from(website).where(
+      and(
+        eq(website.id, siteId),
+        eq(website.userId, session?.user.id)
+      )
+    )
+
+    if (!SiteBelongsToUser[0]) {
+      return {
+        success: false,
+        message: "Site does not belong to user",
+      }
+    }
+
+    await db.delete(website).where(eq(website.id, siteId));
+
+    return {
+      success: true,
+      message: "Site deleted successfully",
+    }
+  } catch (err) {
+    console.error("Error deleting site:", err)
+    return {
+      success: false,
+      message: err instanceof Error ? err.message : "Failed to delete site",
     }
   }
 }

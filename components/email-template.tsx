@@ -12,7 +12,7 @@ import {
   Tailwind,
 } from '@react-email/components';
 
-const DowntimeAlert = ({ siteName }: { siteName: string }) => {
+const DowntimeAlert = ({ siteName,url }: { siteName: string,url:string }) => {
   return (
     <Html>
       <Tailwind>
@@ -33,7 +33,7 @@ const DowntimeAlert = ({ siteName }: { siteName: string }) => {
 
             <Section className="bg-[#1E293B] p-[32px] rounded-b-[12px]">
               <Text className="text-[16px] text-white mb-[24px]">
-                We've detected that <span className="font-bold text-[#38BDF8]">{siteName}</span> is currently unreachable.
+                We've detected that <a href={url} className="font-bold text-[#38BDF8]">{siteName}</a> is currently unreachable.
               </Text>
 
               <Section className="bg-[#334155] rounded-[8px] p-[16px] mb-[24px]">
