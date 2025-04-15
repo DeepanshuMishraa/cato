@@ -24,16 +24,16 @@ export default function Appbar() {
         <button
           className="md:hidden p-2 hover:bg-gray-100 rounded-lg"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
-      >
+        >
           {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
         <div className="hidden md:block">
           <div className="space-x-4 text-xs">
-            <Link href="/how-it-works" className="text-gray-500 hover:text-black duration-200">
+            <Link href="#how-it-works" className="text-gray-500 hover:text-black duration-200">
               How it works
             </Link>
-            <Link href="Features" className="text-gray-500 hover:text-black duration-200">
-              Features
+            <Link href="#subscribe" className="text-gray-500 hover:text-black duration-200">
+              Subscribe
             </Link>
           </div>
         </div>
@@ -63,18 +63,18 @@ export default function Appbar() {
           <div className="fixed top-[64px] left-0 right-0 bg-white/95 backdrop-blur-md border-b shadow-sm py-6 px-4 flex flex-col gap-6 animate-in slide-in-from-top duration-300">
             <div className="flex flex-col gap-4">
               <Link
-                href="/how-it-works"
+                href="#how-it-works"
                 className="text-gray-600 hover:text-black duration-200 text-sm py-2"
                 onClick={() => setIsMenuOpen(false)}
               >
                 How it works
               </Link>
               <Link
-                href="Features"
+                href="#subscribe"
                 className="text-gray-600 hover:text-black duration-200 text-sm py-2"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Features
+                Subscribe
               </Link>
             </div>
             <div>
@@ -91,7 +91,7 @@ export default function Appbar() {
                 }} />
               ) : (
                 <JoinWaitlistButton onClick={() => setIsMenuOpen(false)}>
-                  Join Waitlist
+                  Get Started
                 </JoinWaitlistButton>
               )}
             </div>
