@@ -1,5 +1,5 @@
 import FeatureCard from "@/components/AboutCards";
-import EarlyAccess from "@/components/EarlyAccess";
+import ProductInfo from "@/components/Info";
 import Hero from "@/components/Hero";
 
 export default function Home() {
@@ -7,7 +7,7 @@ export default function Home() {
     <main>
       <Hero />
       <FeatureCard />
-      <EarlyAccess />
+      <ProductInfo />
     </main>
   );
 }
