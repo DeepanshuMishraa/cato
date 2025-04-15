@@ -29,11 +29,11 @@ export default function Appbar() {
         </button>
         <div className="hidden md:block">
           <div className="space-x-4 text-xs">
+            <Link href="#features" className="text-gray-500 hover:text-black duration-200">
+              Features
+            </Link>
             <Link href="#how-it-works" className="text-gray-500 hover:text-black duration-200">
               How it works
-            </Link>
-            <Link href="#subscribe" className="text-gray-500 hover:text-black duration-200">
-              Subscribe
             </Link>
           </div>
         </div>
