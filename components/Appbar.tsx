@@ -61,18 +61,18 @@ export default function Appbar() {
           <div className="fixed top-[64px] left-0 right-0 bg-white/95 backdrop-blur-md border-b shadow-sm py-6 px-4 flex flex-col gap-6 animate-in slide-in-from-top duration-300">
             <div className="flex flex-col gap-4">
               <Link
+                href="#features"
+                className="text-gray-600 hover:text-black duration-200 text-sm py-2"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Features
+              </Link>
+              <Link
                 href="#how-it-works"
                 className="text-gray-600 hover:text-black duration-200 text-sm py-2"
                 onClick={() => setIsMenuOpen(false)}
               >
                 How it works
-              </Link>
-              <Link
-                href="#subscribe"
-                className="text-gray-600 hover:text-black duration-200 text-sm py-2"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Subscribe
               </Link>
             </div>
             <div>

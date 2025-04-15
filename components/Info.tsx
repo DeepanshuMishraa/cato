@@ -1,6 +1,6 @@
 export default function TechnicalInfo() {
   return (
-    <div id="technical-info" className="flex flex-col items-center justify-center min-h-[90vh] px-4 sm:px-6 pb-32">
+    <div id="how-it-works" className="flex flex-col items-center justify-center min-h-[90vh] px-4 sm:px-6 pb-32">
       <div className="max-w-3xl mx-auto space-y-12">
         <div className="flex flex-col items-center text-center space-y-3">
           <h2 className="text-sm font-mono text-gray-500 uppercase tracking-wider">Technology</h2>
