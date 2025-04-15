@@ -36,7 +36,7 @@ export default function TechnicalInfo() {
         </div>
 
         <div className="pt-20 border-t">
-          <div className="grid grid-cols-1 md:grid-cols-2  gap-4 sm:gap-12">
+          <div className="flex items-center justify-between gap-4 sm:gap-12">
             <div className="flex flex-col space-y-2">
               <div className="flex items-center gap-3">
                 <div className="h-px w-4 bg-black"></div>

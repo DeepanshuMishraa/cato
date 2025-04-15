@@ -25,16 +25,14 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowUp10Icon, Loader2 } from "lucide-react";
 import Link from "next/link";
 import type { UrlObject } from 'url';
 import { useRouter } from "next/navigation";
-
-
+import { SubscribedUser } from "@/actions/payments.actions";
 
 type Url = string | UrlObject;
-
 
 export default function JoinWaitlistButton({
   children,
@@ -68,7 +66,6 @@ export function LogoutButton({ onClick }: { onClick: () => void }) {
   )
 }
 
-
 export function AddSiteButton() {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -79,8 +76,6 @@ export function AddSiteButton() {
       url: ""
     },
   })
-
-
 
   async function onSubmit(values: SiteType) {
     try {
@@ -162,18 +157,32 @@ export function AddSiteButton() {
   );
 }
 
-
 export function UpgradeToPlus() {
   const router = useRouter();
+  const [isSubscribed, setIsSubscribed] = useState(false);
   const productId = process.env.NEXT_PUBLIC_PLUS_PRODUCT_ID;
-  if (!productId) {
-    console.error("PLUS_PRODUCT_ID is not defined in the environment variables");
-    return null;
+
+  useEffect(() => {
+    const checkSubscription = async () => {
+      const subscription = await SubscribedUser();
+      setIsSubscribed(subscription?.subscribed || false);
+    };
+    checkSubscription();
+  }, []);
+
+  if (isSubscribed) {
+    return null
   }
+
   return (
-    <Button onClick={() => {
-      router.push(`/api/checkout?productId=${productId}`)
-    }} size="sm" variant={null} className="cursor-pointer  bg-blue-600/90 hover:bg-blue-600/95 text-white py-4 rounded-xl text-xs font-normal">
+    <Button
+      onClick={() => {
+        router.push(`/api/checkout?productId=${productId}`)
+      }}
+      size="sm"
+      variant={null}
+      className="cursor-pointer bg-blue-600/90 hover:bg-blue-600/95 text-white py-4 rounded-xl text-xs font-normal"
+    >
       <ArrowUp10Icon /> Upgrade to Plus
     </Button>
   )
