@@ -2,7 +2,7 @@
 
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
-import JoinWaitlistButton, { LogoutButton } from "./buttons";
+import JoinWaitlistButton, { LogoutButton, UpgradeToPlus } from "./buttons";
 import CatoIcon from "@/app/icons";
 import { authClient } from "@/lib/auth.client";
 import { useRouter } from "next/navigation";
@@ -37,7 +37,8 @@ export default function Appbar() {
             </Link>
           </div>
         </div>
-        <div className="hidden md:block">
+        <div className="hidden md:flex md:items-center md:space-x-2 md:justify-center">
+          <UpgradeToPlus />
           {session ? (
             <LogoutButton onClick={() => {
               authClient.signOut({
@@ -53,6 +54,7 @@ export default function Appbar() {
               Get Started
             </JoinWaitlistButton>
           )}
+
         </div>
       </div>
       {isMenuOpen && (

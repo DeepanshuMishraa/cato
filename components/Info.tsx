@@ -61,7 +61,7 @@ export default function TechnicalInfo() {
             <div className="flex flex-col space-y-2">
               <div className="flex items-center gap-3">
                 <div className="h-px w-4 bg-black"></div>
-                <span className="text-[10px] font-mono text-gray-500 uppercase tracking-wider">Premium Plan</span>
+                <span className="text-[10px] font-mono text-gray-500 uppercase tracking-wider">Plus Plan</span>
               </div>
               <ul className="text-xs text-gray-600 space-y-2">
                 <li className="flex items-center gap-2">

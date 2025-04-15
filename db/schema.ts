@@ -8,6 +8,10 @@ export const user = pgTable("user", {
   image: text('image'),
   createdAt: timestamp('created_at').notNull(),
   updatedAt: timestamp('updated_at').notNull(),
+  subscribed: boolean('subscribed').notNull().default(false),
+  plan: text('plan').notNull().default('free'),
+  polarCustomerId: text('polar_customer_id').unique(),
+  polarOrderId: text('polar_order_id').unique(),
 });
 
 export const session = pgTable("session", {
