@@ -4,7 +4,7 @@ import { Webhooks } from "@polar-sh/nextjs";
 import { eq } from "drizzle-orm";
 
 export const POST = Webhooks({
-  webhookSecret: process.env.NODE_ENV === "production" ? process.env.POLAR_ACCESS_TOKEN! : process.env.POLAR_ACCESS_TOKEN_DEV!,
+  webhookSecret: process.env.NODE_ENV === "production" ? process.env.POLAR_WEBHOOK_SECRET! : process.env.POLAR_WEBHOOK_SECRET_DEV!,
   onOrderCreated: async (payload) => {
     const customerId = payload.data.customerId;
     const customerEmail = payload.data.customer.email;
