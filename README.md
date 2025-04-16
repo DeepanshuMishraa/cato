@@ -22,6 +22,5 @@ Cato is built with modern web technologies:
 - Real-time status monitoring and updates
 - Polar for subscription management
 
-The name "Cato" represents our commitment to vigilantly watching over your web assets, much like a dedicated guardian.
 
 
