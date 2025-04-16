@@ -16,7 +16,7 @@ const Dashboard = () => {
   const debouncedSearch = useDebounce(search, 500)
 
   const mutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async () => { 
       if (!session?.user?.id) return null
       return await searchSites(debouncedSearch)
     }

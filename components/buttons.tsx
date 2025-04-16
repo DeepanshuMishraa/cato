@@ -31,6 +31,7 @@ import Link from "next/link";
 import type { UrlObject } from 'url';
 import { useRouter } from "next/navigation";
 import { SubscribedUser } from "@/actions/payments.actions";
+import { authClient } from "@/lib/auth.client";
 
 type Url = string | UrlObject;
 const productId = process.env.NEXT_PUBLIC_PLUS_PRODUCT_ID;
@@ -172,6 +173,7 @@ export function AddSiteButton() {
 export function UpgradeToPlus() {
   const router = useRouter();
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const session = authClient.useSession();
 
   useEffect(() => {
     const checkSubscription = async () => {
@@ -188,7 +190,7 @@ export function UpgradeToPlus() {
   return (
     <Button
       onClick={() => {
-        router.push(`/api/checkout?productId=${productId}`)
+        router.push(`/api/checkout?productId=${productId}&customerEmail=${session?.data?.user.email}`)
       }}
       size="sm"
       variant={null}
