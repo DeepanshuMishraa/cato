@@ -34,7 +34,7 @@ import { SubscribedUser } from "@/actions/payments.actions";
 import { authClient } from "@/lib/auth.client";
 
 type Url = string | UrlObject;
-const productId = process.env.NEXT_PUBLIC_PLUS_PRODUCT_ID;
+const productId = process.env.NODE_ENV === "production" ? process.env.NEXT_PUBLIC_PLUS_PRODUCT_ID_PROD : process.env.NEXT_PUBLIC_PLUS_PRODUCT_ID_DEV;
 
 export default function JoinWaitlistButton({
   children,
