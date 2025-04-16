@@ -33,6 +33,7 @@ import { useRouter } from "next/navigation";
 import { SubscribedUser } from "@/actions/payments.actions";
 
 type Url = string | UrlObject;
+const productId = process.env.NEXT_PUBLIC_PLUS_PRODUCT_ID;
 
 export default function JoinWaitlistButton({
   children,
@@ -68,6 +69,7 @@ export function LogoutButton({ onClick }: { onClick: () => void }) {
 
 export function AddSiteButton() {
   const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
 
   const form = useForm<SiteType>({
     resolver: zodResolver(SiteTypes),
@@ -75,80 +77,90 @@ export function AddSiteButton() {
       name: "",
       url: ""
     },
-  })
+  });
 
   async function onSubmit(values: SiteType) {
     try {
       const res = await addSite(values);
-      if (res.success == false) {
-        toast.error(res.message)
+      if (!res.success) {
+        if (res.message.includes("limit")) {
+          toast.error(res.message, {
+            action: {
+              label: "Upgrade",
+              onClick: () => router.push(`/api/checkout?productId=${productId}`),
+            },
+            className: "bg-red-500 text-white",
+          });
+        } else {
+          toast.error(res.message);
+        }
       } else {
-        toast.success(res.message)
+        toast.success(res.message);
         form.reset();
+        setIsOpen(false);
+        router.refresh();
       }
     } catch (err) {
-      toast.error("An error occurred while adding the site")
+      toast.error("An error occurred while adding the site");
       console.error(err);
     }
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <div className="flex items-center justify-center">
-        <DialogTrigger asChild>
-          <Button className="rounded-xs">Create Monitor</Button>
-        </DialogTrigger>
-      </div>
+      <DialogTrigger asChild>
+        <Button className="rounded-xs">
+          Create Monitor
+        </Button>
+      </DialogTrigger>
 
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Add a site</DialogTitle>
           <DialogDescription>
-            Add a site to monitor. You can add multiple sites and manage them
-            from your dashboard.
+            Add a site to monitor. You can add multiple sites and manage them from your dashboard.
           </DialogDescription>
         </DialogHeader>
-        <DialogContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Name" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      This is your public display name.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="url"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Site Url</FormLabel>
-                    <FormControl>
-                      <Input placeholder="site url" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      This is your public display name.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button type="submit">Add site</Button>
-            </form>
-          </Form>
-        </DialogContent>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Name" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    This is your public display name.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="url"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Site Url</FormLabel>
+                  <FormControl>
+                    <Input placeholder="site url" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    This is your public display name.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </form>
+        </Form>
+
         <DialogFooter>
-          <Button type="submit" className="w-full">
+          <Button type="submit" className="w-full" onClick={form.handleSubmit(onSubmit)}>
             {form.formState.isSubmitting ? <Loader2 className="animate-spin" /> : "Add site"}
           </Button>
         </DialogFooter>
@@ -160,7 +172,6 @@ export function AddSiteButton() {
 export function UpgradeToPlus() {
   const router = useRouter();
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const productId = process.env.NEXT_PUBLIC_PLUS_PRODUCT_ID;
 
   useEffect(() => {
     const checkSubscription = async () => {

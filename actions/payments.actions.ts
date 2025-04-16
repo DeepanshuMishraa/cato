@@ -25,7 +25,7 @@ export const SubscribedUser = async () => {
       return {
         subscribed: false,
       }
-    }
+    } 
 
     return {
       subscribed: true,

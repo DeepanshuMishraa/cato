@@ -9,6 +9,7 @@ import { headers } from "next/headers";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import { sendEmailAlert } from "@/lib/mail";
+import { SubscribedUser } from "./payments.actions";
 
 type AddSiteResponse = {
   success: boolean;
@@ -20,6 +21,22 @@ type GetSitesResponse = {
   message?: string;
   sites?: any[];
 };
+
+const sitesPerUser = async (): Promise<number> => {
+  const session = await auth.api.getSession({
+    headers: await headers()
+  })
+
+  if (!session?.user) {
+    throw new Error("User not authenticated")
+  }
+
+  const websiteByUser = await db.select().from(website).where(eq(
+    website.userId, session?.user.id
+  ))
+
+  return websiteByUser.length;
+}
 
 export const addSite = async (site: unknown): Promise<AddSiteResponse> => {
   try {
@@ -44,6 +61,20 @@ export const addSite = async (site: unknown): Promise<AddSiteResponse> => {
 
     const { name, url } = parsedData.data;
     const now = new Date();
+
+    const FREE_SITE_LIMIT = 5;
+    const isSubscribed = await SubscribedUser();
+
+    if (!isSubscribed.subscribed) {
+      const sitesCount = await sitesPerUser();
+      if (sitesCount >= FREE_SITE_LIMIT) {
+        return {
+          success: false,
+          message: `You have reached the limit of ${FREE_SITE_LIMIT} sites for free users. Please subscribe to add more sites.`,
+        };
+      }
+    }
+
     await db.insert(website).values({
       id: crypto.randomUUID(),
       name: name.trim(),
