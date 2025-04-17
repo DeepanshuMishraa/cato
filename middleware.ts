@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionCookie } from "better-auth/cookies";
 
-// Routes that require authentication
 const protectedPaths = [
   '/dashboard',
   '/success',
 ];
 
-// Public routes that don't require authentication
 const publicPaths = [
   '/',
   '/sign-in',
@@ -17,7 +15,6 @@ export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const sessionCookie = getSessionCookie(request);
 
-  // Always allow static files and API routes
   if (
     path.startsWith('/_next') ||
     path.startsWith('/api') ||
@@ -38,8 +35,7 @@ export async function middleware(request: NextRequest) {
 
   return NextResponse.next();
 }
-
-// Update matcher to handle all routes except static files
+s
 export const config = {
   matcher: [
     /*
