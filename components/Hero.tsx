@@ -1,6 +1,10 @@
+'use client'
+
+import { authClient } from "@/lib/auth.client";
 import Link from "next/link";
 
 const Hero = () => {
+  const session = authClient.useSession();
   return (
     <div className="min-h-[80vh] flex flex-col items-center justify-center max-w-3xl mx-auto px-4 sm:px-6 motion-preset-fade motion-duration-1000 border-b">
       <div className="mb-2 text-xs sm:text-sm font-mono tracking-wider text-gray-500 uppercase">Uptime monitoring</div>
@@ -11,7 +15,7 @@ const Hero = () => {
         Instant notifications. Real-time analytics. Reliable monitoring.
       </p>
       <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-center">
-        <Link href="/dashboard">
+        <Link href={session?.data?.user ? "/dashboard" : "/sign-in"}>
           <button
             type="submit"
             className="w-full sm:w-auto rounded-none bg-black hover:bg-gray-800 text-white px-4 sm:px-6 py-2.5 sm:py-3 text-base sm:text-lg"
@@ -23,7 +27,7 @@ const Hero = () => {
           Learn more →
         </a>
       </div>
-    </div>
+    </div >
   );
 };
 
