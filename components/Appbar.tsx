@@ -13,6 +13,11 @@ export default function Appbar() {
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  const handleLogout = async () => {
+    await authClient.signOut();
+    router.push("/");
+  };
+
   return (
     <nav className="relative z-50">
       <div className="py-4 px-4 md:px-20 flex justify-between items-center bg-white">
@@ -40,21 +45,12 @@ export default function Appbar() {
         <div className="hidden md:flex md:items-center md:space-x-2 md:justify-center">
           <UpgradeToPlus />
           {session ? (
-            <LogoutButton onClick={() => {
-              authClient.signOut({
-                fetchOptions: {
-                  onSuccess: () => {
-                    router.push("/dashboard");
-                  }
-                }
-              })
-            }} />
+            <LogoutButton onClick={handleLogout} />
           ) : (
             <JoinWaitlistButton href="/sign-in">
               Get Started
             </JoinWaitlistButton>
           )}
-
         </div>
       </div>
       {isMenuOpen && (
@@ -79,16 +75,7 @@ export default function Appbar() {
             </div>
             <div>
               {session ? (
-                <LogoutButton onClick={() => {
-                  authClient.signOut({
-                    fetchOptions: {
-                      onSuccess: () => {
-                        router.push("/");
-                        setIsMenuOpen(false);
-                      }
-                    }
-                  })
-                }} />
+                <LogoutButton onClick={handleLogout} />
               ) : (
                 <JoinWaitlistButton href="/sign-in" onClick={() => setIsMenuOpen(false)}>
                   Get Started
